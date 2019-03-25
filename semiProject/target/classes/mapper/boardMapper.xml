@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "boardmapper">
+	<resultMap type="map" id="selectList">
+		<result column="board_num" property="boardNum" />
+		<result column="emp_name" property="empName" />
+		<result column="board_subject" property="boardSubject" />
+		<result column="board_content" property="boardContent" />
+		<result column="board_regdate" property="boardRegdate" />
+		<result column="board_uptdate" jdbcType="DATE" property="boardUptdate" />
+		<result column="board_name" jdbcType="VARCHAR" property="boardName" />
+		<result column="board_condition" property="boardCondition" />
+		<result column="board_save" property="boardSave" />
+	</resultMap>
+	<select id="list" parameterType="map" resultMap="selectList">
+		SELECT
+			b.board_num
+			,e.emp_name
+			,b.board_subject
+			,b.board_content
+			,b.board_regdate
+			,b.board_uptdate
+			,b.board_name 
+			,b.board_condition
+			,b.board_save
+		FROM kyk_board b, kyk_employee e
+		WHERE 1=1
+		and b.emp_name = e.emp_name
+		<if test='(empRank == "e" and empSub == "n") or (empRank == "a" and empSub == "n")'>
+			and e.emp_name = #{empName}
+		</if>
+		<if test='EMP_RANK1 == "mm" and empSub == "y" and empRank == "a"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('e','b'),('e','c'),('e','e'),('mm','c'),('mm','d'),('mm','e'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test='EMP_RANK1 == "mm" and empSub == "y" and empRank == "e"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('a','b'),('a','c'),('a','e'),('mm','c'),('mm','d'),('mm','e'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test='empRank == "mm"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('a','b'),('e','b'),('a','c'),('a','e'),('e','c'),('e','e'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test='empRank == "gg"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('mm','e'),('a','c'),('e','c'),('mm','c'),('mm','d'),('a','d'),('e','d'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test='EMP_RANK1 == "gg" and empSub == "y" and empRank == "e"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('mm','e'),('a','c'),('mm','c'),('mm','d'),('a','d'),('gg','d'),('gg','e'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test='EMP_RANK1 == "gg" and empSub == "y" and empRank == "a"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('mm','e'),('e','c'),('mm','c'),('mm','d'),('e','d'),('gg','d'),('gg','e'))
+			or e.emp_name = #{empName})
+		</if>
+		<if test="datepicker != null and datepicker != '' and datepicker1 != null and datepicker1 != ''">
+							and b.board_regdate between to_date(#{datepicker}, 'YYYY-MM-DD') and (to_date(#{datepicker1}, 'YYYY-MM-DD')+1)
+		</if>
+			<if test="keyword != null and keyword != ''">
+					<if test="searchOption == 'writer'">
+						and e.emp_name like '%'||#{keyword}||'%'
+					</if>
+					<if test="searchOption == 'title'">
+						and b.board_subject like '%'||#{keyword}||'%'
+					</if>
+					<if test="searchOption == 'supervisor'">
+						and b.board_name like '%'||#{keyword}||'%'
+					</if>
+			</if>
+		<if test="conditionOption != null and conditionOption != ''">
+			and b.board_condition = #{conditionOption}
+		</if>
+		ORDER BY b.board_regdate desc
+	</select>
+	<select id="count" resultType="String">
+		SELECT
+		concat('bo',lpad(nvl(max(substr(board_num, 3))+1,1), 4, 0)) cnt
+		FROM KYK_BOARD
+	</select>
+	
+	<!-- <insert id="write" parameterType="map">
+		INSERT INTO KYK_BOARD(
+			BOARD_NUM
+			,EMP_NAME
+			,BOARD_SUBJECT
+			,BOARD_CONTENT
+			,BOARD_REGDATE
+			,BOARD_CONDITION
+			) VALUES(
+			#{boardNum}
+			,#{empName}
+			,#{boardSubject}
+			,#{boardContent}
+			,sysdate
+			,
+			<if test="fail != null">
+			#{fail}
+			</if>
+			<if test="save != null">
+			#{save}
+			</if>
+			<if test="payment != null">
+			#{payment}
+			</if>
+			)
+	</insert>
+	
+	<update id="upwrite" parameterType="map">
+		UPDATE KYK_BOARD
+			SET board_subject = #{boardSubject}
+				,board_content = #{boardContent}
+				,board_condition = 
+				<if test="upfail != null">
+				#{upfail}
+				</if>
+				<if test="upsave != null">
+				#{upsave}
+				</if>
+				<if test="uppayment != null">
+				#{uppayment}
+				</if>
+				<choose>
+					<when test='upsave == "a" or uppayment == "b"'>
+						,board_regdate = sysdate
+					</when>
+					<otherwise>
+						,board_uptdate = sysdate
+						,board_name = #{empName}
+					</otherwise>
+				</choose>
+		WHERE board_num = #{boardNum}
+	</update> -->
+	
+	<insert id="history" parameterType="map">
+		INSERT INTO kyk_history(
+			his_num
+			,board_num
+			,his_uptdate
+			,his_name
+			,his_condition
+			) VALUES(
+			(select concat('his',lpad(nvl(max(substr(his_num, 4))+1,1), 3, 0)) cnt from kyk_history)
+			,#{boardNum}
+			,sysdate
+			,#{sessName}<if test="EMP_NAME1 != '' "> || '('|| #{EMP_NAME1} || '('
+							|| <if test='EMP_RANK1 == "mm"'>'과장'</if>
+							<if test='EMP_RANK1 == "gg"'>'부장'</if> || ')' ||')'</if>
+			,
+			<if test="fail != null">
+			#{fail}
+			</if>
+			<if test="save != null">
+			#{save}
+			</if>
+			<if test="payment != null">
+			#{payment}
+			</if>
+<!-- 			<if test="upfail != null"> -->
+<!-- 			#{upfail} -->
+<!-- 			</if> -->
+<!-- 			<if test="upsave != null"> -->
+<!-- 			#{upsave} -->
+<!-- 			</if> -->
+<!-- 			<if test="uppayment != null"> -->
+<!-- 			#{uppayment} -->
+<!-- 			</if> -->
+			)
+	</insert>
+	<resultMap type="map" id="historyList">
+		<result column="his_num" property="hisNum" />
+		<result column="board_num" property="boardNum" />
+		<result column="his_uptdate" property="hisUptdate" />
+		<result column="his_name" property="hisName" />
+		<result column="his_condition" property="hisCondition" />
+	</resultMap>
+	<select id="hisList" resultMap="historyList">
+		SELECT
+			ROWNUM his_num
+			,board_num
+			,his_uptdate
+			,his_name
+			,his_condition
+		FROM kyk_history
+		WHERE 1=1
+		and board_num = #{boardNum}
+	</select>
+	
+	<select id="modify" parameterType="String" resultMap="selectList">
+		SELECT
+			board_num
+			,emp_name
+			,board_subject
+			,board_content
+			,board_regdate
+			,board_uptdate
+			,board_name
+			,board_condition
+			,board_save
+		FROM kyk_board
+		WHERE board_num = #{boardNum}
+	</select>
+	
+	<select id="ajaxaa" parameterType="map" resultMap="selectList">
+		SELECT
+				b.board_num
+				,e.emp_name
+				,b.board_subject
+				,b.board_content
+				,b.board_regdate
+				,b.board_uptdate
+				,b.board_name
+				,b.board_condition
+				,b.board_save
+			FROM kyk_board b, kyk_employee e
+			WHERE 1=1
+			and b.emp_name = e.emp_name
+			<if test='(empRank == "e" and empSub == "n") or (empRank == "a" and empSub == "n")'>
+				and e.emp_name = #{empName}
+			</if>
+			<if test='EMP_RANK1 == "mm" and empSub == "y" and empRank == "a"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('e','b'),('e','c'),('e','e'),('mm','c'),('mm','d'),('mm','e'))
+			or e.emp_name = #{empName})
+			</if>
+			<if test='EMP_RANK1 == "mm" and empSub == "y" and empRank == "e"'>
+			and ((e.emp_rank,b.board_condition) in 
+			(('a','b'),('a','c'),('a','e'),('mm','c'),('mm','d'),('mm','e'))
+			or e.emp_name = #{empName})
+			</if>
+			<if test='empRank == "mm"'>
+				and ((e.emp_rank,b.board_condition) in 
+				(('a','b'),('e','b'),('a','c'),('a','e'),('e','c'),('e','e'))
+				or e.emp_name = #{empName})
+			</if>
+			<if test='empRank == "gg"'>
+				and ((e.emp_rank,b.board_condition) in 
+				(('mm','e'),('a','c'),('e','c'),('mm','c'),('mm','d'),('a','d'),('e','d'))
+				or e.emp_name = #{empName})
+			</if>
+			<if test='EMP_RANK1 == "gg" and empSub == "y" and empRank == "e"'>
+				and ((e.emp_rank,b.board_condition) in 
+				(('mm','e'),('a','c'),('mm','c'),('mm','d'),('a','d'),('gg','d'),('gg','e'))
+				or e.emp_name = #{empName})
+			</if>
+			<if test='EMP_RANK1 == "gg" and empSub == "y" and empRank == "a"'>
+				and ((e.emp_rank,b.board_condition) in 
+				(('mm','e'),('e','c'),('mm','c'),('mm','d'),('e','d'),('gg','d'),('gg','e'))
+				or e.emp_name = #{empName})
+			</if>
+			<if test="datepicker != null and datepicker != '' and datepicker1 != null and datepicker1 != ''">
+								and b.board_regdate between to_date(#{datepicker}, 'YYYY-MM-DD') and (to_date(#{datepicker1}, 'YYYY-MM-DD')+1)
+			</if>
+			<if test="keyword != null and keyword != ''">
+					<if test="searchOption == 'writer'">
+						and e.emp_name like '%'||#{keyword}||'%'
+					</if>
+					<if test="searchOption == 'title'">
+						and b.board_subject like '%'||#{keyword}||'%'
+					</if>
+					<if test="searchOption == 'supervisor'">
+						and b.board_name like '%'||#{keyword}||'%'
+					</if>
+			</if>
+			<if test="conditionOption != null and conditionOption != ''">
+				and b.board_condition = #{conditionOption}
+			</if>
+			ORDER BY b.board_regdate desc
+	</select>
+	
+	<update id="write" parameterType="map">
+		MERGE INTO kyk_board b
+    		USING DUAL
+       			ON (b.board_num = #{boardNum})
+    		WHEN MATCHED THEN
+        		UPDATE
+					SET b.board_subject = #{boardSubject}
+						,b.board_content = #{boardContent}
+						,b.board_condition = 
+						<if test="fail != null">
+						#{fail}
+						</if>
+						<if test="save != null">
+						#{save}
+						</if>
+						<if test="payment != null">
+						#{payment}
+						</if>
+						<choose>
+						<when test='save == "a" or payment == "b"'>
+							,b.board_regdate = sysdate
+							,b.board_uptdate = null
+							,b.board_name = null
+						</when>
+						<otherwise>
+							,b.board_uptdate = sysdate
+							,b.board_name = #{sessName}<if test="EMP_NAME1 != '' "> || '('|| #{EMP_NAME1} || '('
+							|| <if test='EMP_RANK1 == "mm"'>'과장'</if>
+							<if test='EMP_RANK1 == "gg"'>'부장'</if> || ')' ||')'</if>
+						</otherwise>
+						</choose>
+				WHERE b.board_num = #{boardNum} 
+    		WHEN NOT MATCHED THEN 
+		       INSERT (
+					b.BOARD_NUM
+					,b.EMP_NAME
+					,b.BOARD_SUBJECT
+					,b.BOARD_CONTENT
+					,b.BOARD_REGDATE
+					,b.BOARD_CONDITION
+					) VALUES(
+					#{boardNum}
+					,#{empName}
+					,#{boardSubject}
+					,#{boardContent}
+					,sysdate
+					,
+					<if test="fail != null">
+					#{fail}
+					</if>
+					<if test="save != null">
+					#{save}
+					</if>
+					<if test="payment != null">
+					#{payment}
+					</if>
+					)
+	</update>
+	<resultMap type="map" id="subSelect">
+		<result column="emp_num" property="empNum" ></result>
+		<result column="emp_name" property="empName" ></result>
+		<result column="emp_id" property="empId" ></result>
+		<result column="emp_pass" property="empPass" ></result>
+		<result column="emp_rank" property="empRank" ></result>
+		<result column="emp_sub" property="empSub" ></result>
+	</resultMap>
+	<select id="substitute" parameterType="String" resultMap="subSelect">
+		select
+			emp_num
+			,emp_name
+			,emp_id
+			,emp_pass
+			,emp_rank
+			,emp_sub
+		from kyk_employee
+		where 1=1
+		and emp_sub = 'n'
+		<if test="empRank == 'gg'">
+			and emp_sub = 'n'
+		</if>
+	</select>
+	
+	<update id="update" parameterType="map">
+		update kyk_employee
+			set emp_sub = 'y'
+		where emp_name = #{subName}
+	</update>
+	
+	<insert id="insertsub" parameterType="map">
+		insert into kyk_substitute (
+			sub_num
+			,sub_name
+			,sub_rank
+			,sub_regdate
+			,emp_name
+			,emp_rank)
+		values (
+			(select concat('sub',lpad(nvl(max(substr(sub_num, 4))+1,1), 3, 0)) sub_num from kyk_substitute)
+			,#{subName}
+			,#{subRank}
+			,sysdate
+			,#{empName}
+			,#{empRank}
+			)
+	</insert>
+</mapper>
