@@ -15,11 +15,18 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <script src="./resources/js/jquery-3.3.1.min.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
 </head>
 <script>
 	$(document).ready(function(){
 		$("#logout").click(function(){
-			window.location.href='http://localhost:8090/com/logout';
+			Kakao.init('b5cdc60bceb24a135c068ea11f8b1408');
+			Kakao.Auth.logout(function(){
+				setTimeout(function(){
+					location.href="http://localhost:8090/com/logout"}, 1000);
+			});
+// 			window.open('http://developers.kakao.com/logout');
+//  			window.location.href='http://localhost:8090/com/logout';
 		});
 		
 		$('#datepicker, #datepicker1').click(function() {

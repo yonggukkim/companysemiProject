@@ -40,6 +40,22 @@ public class LoginServiceImpl implements LoginService{
 			return "loginfail";
 		}
 	}
-	
-	
+	@Override
+	public String snslogin(String userNickName, HttpSession session) {
+		userNickName = "kook7749@naver.com";
+		System.out.println(userNickName);
+		Map<String, Object> map1 = new HashMap<String, Object>();
+		map1 = loginDao.snscheck(userNickName);
+		Map<String, Object> map = loginDao.snslogin(map1);
+		if(map != null) {
+			map.put("empPass", "****");
+			session.setAttribute("login", map);
+			System.out.println("세션 값 확인 : "+session.getAttribute("login"));
+			System.out.println("성공");
+			return "redirect:/board";
+		}else {
+			System.out.println("실패");
+			return "loginfail";
+		}
+	}
 }

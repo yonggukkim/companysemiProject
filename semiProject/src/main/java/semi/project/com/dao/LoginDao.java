@@ -8,4 +8,7 @@ public interface LoginDao {
 
 	Map<String, Object> subeq(Map<String, Object> map);
 
+	Map<String, Object> snscheck(String userNickName);
+
+	Map<String, Object> snslogin(Map<String, Object> map1);
 }

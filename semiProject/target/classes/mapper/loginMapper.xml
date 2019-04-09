@@ -8,6 +8,7 @@
 		<result column="emp_pass" property="empPass" ></result>
 		<result column="emp_rank" property="empRank" ></result>
 		<result column="emp_sub" property="empSub" ></result>
+		<result column="emp_email" property="empEmail" ></result>
 	</resultMap>
 	<select id="subeq" parameterType="map" resultMap="loginSelect">
 		select
@@ -20,6 +21,40 @@
 			and emp_pass = #{empPass}
 	</select>
 	<select id="login" parameterType="map" resultMap="loginSelect">
+		<if test='empSub == "n" or empSub == "m" or empSub == "g"'>
+		select
+		emp_num
+		,emp_name
+		,emp_id
+		,emp_pass
+		,emp_rank
+		,emp_sub
+		,emp_email
+		from kyk_employee
+		where 1=1
+		and emp_id = #{empId}
+		and emp_pass = #{empPass}
+		</if>
+		<if test='empSub == "y"'>
+		select
+		e.emp_num
+		,e.emp_name
+		,e.emp_id
+		,e.emp_pass
+		,e.emp_rank
+		,e.emp_sub
+		,e.emp_email
+		,s.emp_name emp_name1
+		,s.emp_rank emp_rank1
+		,s.sub_regdate
+		from kyk_employee e, kyk_substitute s
+		where 1=1
+		and e.emp_name = s.sub_name
+		and e.emp_id = #{empId}
+		and e.emp_pass = #{empPass}
+		</if>
+	</select>
+	<select id="snslogin" parameterType="map" resultMap="loginSelect">
 		<if test='empSub == "n" or empSub == "m" or empSub == "g"'>
 		select
 		emp_num
@@ -50,5 +85,14 @@
 		and e.emp_id = #{empId}
 		and e.emp_pass = #{empPass}
 		</if>
+	</select>
+	<select id="snscheck" parameterType="String" resultMap="loginSelect">
+		select
+			emp_id
+			,emp_pass
+			,emp_sub
+			from kyk_employee
+			where 1=1
+			and emp_email = #{userNickName}
 	</select>
 </mapper>

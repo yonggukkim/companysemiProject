@@ -7,4 +7,6 @@ public interface LoginService {
 
 	String login(HttpServletRequest req, HttpSession session);
 
+	String snslogin(String userNickName, HttpSession session);
+
 }

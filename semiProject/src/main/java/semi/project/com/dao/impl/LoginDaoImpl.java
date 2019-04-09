@@ -24,5 +24,15 @@ public class LoginDaoImpl implements LoginDao{
 		return sqlSession.selectOne("loginmapper.subeq", map);
 	}
 
+	@Override
+	public Map<String, Object> snslogin(Map<String, Object> map1) {
+		return sqlSession.selectOne("loginmapper.snslogin", map1);
+	}
+
+	@Override
+	public Map<String, Object> snscheck(String userNickName) {
+		return sqlSession.selectOne("loginmapper.snscheck", userNickName);
+	}
+
 	
 }

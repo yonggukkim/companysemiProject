@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import semi.project.com.service.LoginService;
 
@@ -28,6 +29,15 @@ public class LoginController {
 		System.out.println("로그인 시작");
 		String success = loginService.login(req, session);
 		System.out.println("로그인 끝");
+		return success;
+	}
+	
+	@RequestMapping("snslogin")
+	public String snslogin(@RequestParam String userNickName, HttpSession session) {
+		System.out.println("카카오 로그인 시작");
+		System.out.println(userNickName);
+		String success = loginService.snslogin(userNickName, session);
+		System.out.println("카카오 로그인 끝");
 		return success;
 	}
 	
